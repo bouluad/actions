@@ -1,0 +1,31 @@
+name: Deploy All to Kubernetes
+
+description: >
+  A composite GitHub Action that deploys all Kubernetes manifest files in a folder.
+
+inputs:
+  kube-config-data:
+    description: 'The base64-encoded Kubernetes config file'
+    required: true
+  manifest-folder:
+    description: 'The path to the folder containing Kubernetes manifest files'
+    required: true
+  namespace:
+    description: 'The Kubernetes namespace to deploy to'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Configure Kubectl
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ inputs.kube-config-data }}" | base64 --decode > ~/.kube/config
+        kubectl config use-context $(kubectl config view -o jsonpath='{.contexts[0].name}')
+    - name: Deploy All to Kubernetes
+      run: |
+        for manifest_file in ${{ inputs.manifest-folder }}/*.yml; do
+          kubectl apply -f $manifest_file -n ${{ inputs.namespace }}
+        done
