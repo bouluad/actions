@@ -1,0 +1,4 @@
+# Build and Push Docker Image Action
+This GitHub Action builds a Docker image from a Dockerfile and pushes it to a Docker registry.
+
+## Inputs
