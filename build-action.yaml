@@ -1,0 +1,49 @@
+name: build-and-push-docker-image
+
+description: |
+  This action builds a Docker image from a Dockerfile and pushes it to a Docker registry.
+
+inputs:
+  dockerfile-path:
+    description: 'The path to the Dockerfile to build the image from.'
+    required: false
+  image-name:
+    description: 'The name to give the Docker image, including any repository and tag information.'
+    required: true
+  registry-url:
+    description: 'The URL of the Docker registry to push the image to.'
+    required: true
+  registry-username:
+    description: 'The username to authenticate with the Docker registry.'
+    required: true
+  registry-password:
+    description: 'The password or access token to authenticate with the Docker registry.'
+    required: true
+  build-args:
+    description: 'Optional build arguments to pass to the Docker build command.'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      run: |
+        git clone https://github.com/${{ github.repository }} /tmp/workspace
+        cd /tmp/workspace
+        git checkout ${{ github.sha }}
+
+    - name: Build Docker image
+      run: |
+        docker build ${{ inputs.build-args }} -t ${{ inputs.image-name }}${{ inputs.dockerfile-path && ' -f ' + inputs.dockerfile-path }} .
+
+    - name: Tag Docker image
+      run: |
+        docker tag ${{ inputs.image-name }} ${{ inputs.registry-url }}/${{ inputs.image-name }}
+
+    - name: Login to Docker registry
+      run: |
+        docker login -u ${{ inputs.registry-username }} -p ${{ inputs.registry-password }} ${{ inputs.registry-url }}
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ inputs.registry-url }}/${{ inputs.image-name }}
