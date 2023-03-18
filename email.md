@@ -4,7 +4,7 @@ The action uses the actions/checkout action to check out the repository code, an
 
 To use this action, you can create a workflow that triggers on a push to the main branch, and provides the required inputs as workflow variables. For example:
 
-'''
+```
 name: Send email on push
 
 on:
@@ -26,5 +26,5 @@ jobs:
           to_email: recipient@example.com
           subject: New push to main branch
           body: A new push has been made to the main branch.
-'''
+```
 This workflow triggers the send_email job on every push to the main branch, and provides the required inputs using workflow variables. The secrets.EMAIL_USERNAME and secrets.EMAIL_PASSWORD variables are assumed to be set in the repository secrets.
