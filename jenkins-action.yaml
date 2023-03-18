@@ -1,0 +1,35 @@
+name: Trigger Jenkins Job
+
+description: >
+  A composite GitHub Action that triggers a Jenkins job through the Jenkins API using a Jenkins API token for authentication, with optional job parameters.
+
+inputs:
+  jenkins-url:
+    description: 'The URL of the Jenkins server'
+    required: true
+  jenkins-username:
+    description: 'The username for authenticating to the Jenkins server'
+    required: true
+  jenkins-api-token:
+    description: 'The API token for authenticating to the Jenkins server'
+    required: true
+  jenkins-job-name:
+    description: 'The name of the Jenkins job to trigger'
+    required: true
+  jenkins-job-parameters:
+    description: 'Optional parameters to pass to the Jenkins job, in key=value format'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Trigger Jenkins Job
+      run: |
+        if [ -z "${{ inputs.jenkins-job-parameters }}" ]; then
+          curl -X POST -u ${{ inputs.jenkins-username }}:${{ inputs.jenkins-api-token }} \
+          "${{ inputs.jenkins-url }}/job/${{ inputs.jenkins-job-name }}/build?delay=0sec"
+        else
+          curl -X POST -u ${{ inputs.jenkins-username }}:${{ inputs.jenkins-api-token }} \
+          "${{ inputs.jenkins-url }}/job/${{ inputs.jenkins-job-name }}/buildWithParameters?${{ inputs.jenkins-job-parameters }}" -H "Jenkins-Crumb: do-not-crumb"
+        fi
