@@ -1,0 +1,46 @@
+name: Get Secret from Vault with AppRole
+
+description: >
+  A composite GitHub Action that retrieves a secret from Vault using AppRole
+  authentication and sets it as an environment variable for use in subsequent steps.
+
+inputs:
+  vault-address:
+    description: 'The address of the Vault server'
+    required: true
+  vault-role-id:
+    description: 'The AppRole role ID to use for authentication'
+    required: true
+  vault-secret-id:
+    description: 'The AppRole secret ID to use for authentication'
+    required: true
+  secret-path:
+    description: 'The path to the secret in Vault'
+    required: true
+  secret-key:
+    description: 'The key of the secret value to retrieve'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Get Secret Value
+      id: get-secret
+      run: |
+        VAULT_ADDR=${{ inputs.vault-address }}
+        VAULT_ROLE_ID=${{ inputs.vault-role-id }}
+        VAULT_SECRET_ID=${{ inputs.vault-secret-id }}
+        SECRET_PATH=${{ inputs.secret-path }}
+        SECRET_KEY=${{ inputs.secret-key }}
+        # Login to Vault using AppRole authentication
+        vault login -method=approle role_id=$VAULT_ROLE_ID secret_id=$VAULT_SECRET_ID > /dev/null
+        # Retrieve the secret value
+        secret=$(vault kv get -format=json $SECRET_PATH | jq -r .data.$SECRET_KEY)
+        echo "::set-output name=secret-value::$secret"
+    - name: Set Secret as Environment Variable
+      env:
+        SECRET_VALUE: ${{ steps.get-secret.outputs.secret-value }}
+      run: |
+        echo "The secret value is $SECRET_VALUE"
