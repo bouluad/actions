@@ -1,0 +1,45 @@
+name: Send email on push
+
+description: |
+  This action sends an email when a push is made to the main branch.
+  It requires the user to input their email credentials and recipient email address.
+
+inputs:
+  smtp_server:
+    description: 'The SMTP server address.'
+    required: true
+  smtp_port:
+    description: 'The SMTP server port number.'
+    required: true
+  username:
+    description: 'The email account username.'
+    required: true
+  password:
+    description: 'The email account password.'
+    required: true
+  to_email:
+    description: 'The recipient email address.'
+    required: true
+  subject:
+    description: 'The email subject line.'
+    default: 'New push to main branch'
+  body:
+    description: 'The email message body.'
+    default: 'A new push has been made to the main branch.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Send email
+      run: |
+        curl -sS -X POST \
+        --url "smtps://${{ inputs.smtp_server }}:${{ inputs.smtp_port }}" \
+        --ssl-reqd \
+        --mail-from "${{ inputs.username }}" \
+        --mail-rcpt "${{ inputs.to_email }}" \
+        --user "${{ inputs.username }}:${{ inputs.password }}" \
+        --header "Subject: ${{ inputs.subject }}" \
+        --data "${{ inputs.body }}"
