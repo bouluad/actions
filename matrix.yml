@@ -1,0 +1,97 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches:
+      - main # Or the branch you want to trigger the workflow on
+
+jobs:
+  build-openjdk-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        openjdk-versions:
+          - '11'
+          - '14'
+          - '17'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v1
+
+      - name: Build and push OpenJDK Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+          for openjdk_version in ${{ matrix.openjdk-versions }}; do
+            image_tag="openjdk:${openjdk_version}"
+            docker build -t $image_tag --build-arg JDK_VERSION=$openjdk_version .
+            docker push $image_tag
+          done
+
+  build-nodejs-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        nodejs-versions:
+          - '12'
+          - '14'
+          - '16'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v1
+
+      - name: Build and push Node.js Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+          for nodejs_version in ${{ matrix.nodejs-versions }}; do
+            image_tag="node:${nodejs_version}"
+            docker build -t $image_tag --build-arg NODE_VERSION=$nodejs_version .
+            docker push $image_tag
+          done
+
+  build-python-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-versions:
+          - '3.8'
+          - '3.9'
+          - '3.10'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v1
+
+      - name: Build and push Python Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+          for python_version in ${{ matrix.python-versions }}; do
+            image_tag="python:${python_version}"
+            docker build -t $image_tag --build-arg PYTHON_VERSION=$python_version .
+            docker push $image_tag
+          done
