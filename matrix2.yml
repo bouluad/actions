@@ -1,0 +1,36 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches:
+      - main # Or the branch you want to trigger the workflow on
+
+jobs:
+  build-openjdk-images:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        openjdk-versions:
+          - '11'
+          - '14'
+          - '17'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v1
+
+      - name: Log in to Docker Trusted Registry
+        run: |
+          echo ${{ secrets.DTR_PASSWORD }} | docker login <your-dtr-url> -u ${{ secrets.DTR_USERNAME }} --password-stdin
+
+      - name: Build and push OpenJDK Docker images
+        run: |
+          for openjdk_version in ${{ matrix.openjdk-versions }}; do
+            image_tag="<your-dtr-url>/openjdk:${openjdk_version}"
+            docker build -t $image_tag --build-arg JDK_VERSION=$openjdk_version .
+            docker push $image_tag
+          done
