@@ -1,0 +1,35 @@
+name: Java Build, Test, SonarQube Analysis, and Nexus Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Build with Maven
+        run: mvn clean install
+
+      - name: Run Tests
+        run: mvn test
+
+      - name: SonarQube Scan
+        run: mvn sonar:sonar -Dsonar.projectKey=your_project_key -Dsonar.organization=your_organization -Dsonar.host.url=https://your-sonarqube-instance -Dsonar.login=your-sonar-token
+
+      - name: Publish to Nexus
+        run: mvn deploy -DrepositoryId=nexus -Durl=https://your-nexus-repo-url/repository/maven-releases -Drepository.url=https://your-nexus-repo-url/repository/maven-releases -Drepository.username=$NEXUS_USERNAME -Drepository.password=$NEXUS_PASSWORD
+
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
