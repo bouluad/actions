@@ -1,0 +1,38 @@
+name: Python Build, Test, SonarQube Analysis, and Nexus Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8' # Adjust to your Python version
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Tests
+        run: python -m unittest discover
+
+      - name: SonarQube Scan
+        run: sonar-scanner -Dsonar.projectKey=your_project_key -Dsonar.organization=your_organization -Dsonar.host.url=https://your-sonarqube-instance -Dsonar.login=your-sonar-token
+
+      - name: Publish to Nexus
+        run: |
+          pip install twine
+          python setup.py sdist bdist_wheel
+          twine upload --repository-url https://your-nexus-repo-url/repository/pypi/ dist/*
+
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
