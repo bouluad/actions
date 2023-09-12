@@ -1,0 +1,38 @@
+name: Node.js Build, Test, SonarQube Analysis, and Nexus Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Tests
+        run: npm test
+
+      - name: SonarQube Scan
+        run: sonar-scanner -Dsonar.projectKey=your_project_key -Dsonar.organization=your_organization -Dsonar.host.url=https://your-sonarqube-instance -Dsonar.login=your-sonar-token
+
+      - name: Publish to Nexus
+        run: npm publish --registry=https://your-nexus-repo-url/repository/npm-internal/
+
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
