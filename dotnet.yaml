@@ -1,0 +1,40 @@
+name: .NET Core Build, Test, SonarQube Analysis, and Nexus Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '3.x' # Adjust to your .NET Core version
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Run Tests
+        run: dotnet test
+
+      - name: SonarQube Scan
+        run: dotnet sonarscanner begin /k:"your_project_key" /d:sonar.host.url="https://your-sonarqube-instance" /d:sonar.login="your-sonar-token" /o:"your_organization" && dotnet build && dotnet sonarscanner end /d:sonar.login="your-sonar-token"
+
+      - name: Publish to Nexus
+        run: |
+          dotnet pack -c Release --no-build
+          dotnet nuget push bin/Release/*.nupkg --source "nexus" --api-key $NEXUS_PASSWORD
+
+    env:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
